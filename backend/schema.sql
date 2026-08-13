@@ -16,7 +16,7 @@ CREATE INDEX idx_users_username ON users(username);
 -- BODY METRICS 
 CREATE TABLE body_metrics (
     id              SERIAL PRIMARY KEY,
-    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,            
     weight_kg       NUMERIC(6, 2),          -- max number of digits bf/aft inclusive 
     height_cm       NUMERIC(5, 1),
     body_fat_pct    NUMERIC(4,1),
@@ -42,4 +42,29 @@ CREATE TABLE exercise_logs (
     id              SERIAL PRIMARY KEY,
     workout_id      INTEGER NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
     user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    exercise        VARCHAR(100) NOT NULL         
+    exercise        VARCHAR(100) NOT NULL,
+    equipment       VARCHAR(60),
+    sets_done       SMALLINT,
+    reps_done       SMALLINT,
+    weight_used     NUMERIC(6, 2),
+    notes           TEXT,
+    logged_at       TIMESTAMPTZ DEFAULT NOW()
+);         
+
+CREATE INDEX idx_exercise_logs ON exercise_logs(user_id);
+CREATE INDEX idx_exercise_logs_workout ON exercise_logs(workout_id);
+CREATE INDEX idx_exercise_Logs_exercise ON exercise_logs(exercise);
+
+-- RECOMMENDATIONS 
+CREATE TABLE recommendations (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,        -- nulable for guests. uses NULL as value for user_id
+    exercise        VARCHAR(200),
+    equipment       VARCHAR(60),
+    weight_kg       NUMERIC(6, 2),
+    height_cm       NUMERIC(5, 1),
+    output_txt      TEXT NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_recommendations_user ON recommendations(user_id);

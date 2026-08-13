@@ -1,8 +1,8 @@
-import { useState } from "react";                      // getting tools from package
+import { useState } from "react";                     
 import { useNavigate } from "react-router-dom";         
 
 function AnalyzeComp() {                            // component 
-  const [weight, setWeight] = useState("");         // unpacking 
+  const [weight, setWeight] = useState("");         // array destructuring - unpacking into a list
   const [height, setHeight] = useState("");
   const navigate = useNavigate();                   // returns a function
 
@@ -12,7 +12,7 @@ function AnalyzeComp() {                            // component
         alert("Please enter a valid height and weight");
         return;
     }
-    navigate("/analyze_exer", {state: { weight_kg: parseFloat(weight), height_cm: parseFloat(height)}})             // passing object 
+    navigate("/analyze", {state: { weight_kg: parseFloat(weight), height_cm: parseFloat(height)}})             // passing object 
   }
 
   return (
