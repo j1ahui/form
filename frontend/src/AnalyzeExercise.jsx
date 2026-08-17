@@ -64,7 +64,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
       {showPose && <PoseDetection onClose={() => setShowPose(false)} />}
 
       <div className="min-h-screen bg-[#0f0f0f] text-white flex flex-col items-center justify-center px-6">
-        <h1 className="text-4xl font-bold mb-2">Analyze Your Exercise</h1>
+        <h1 className="text-4xl font-bold mb-2">Execute with Perfection</h1>
         <p className="text-gray-500 text-sm mb-8">Choose your analysis method below</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-md">
@@ -75,7 +75,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
             value={exercise}
             onChange={(e) => { setExercise(e.target.value); setMode("rule"); }}
           >
-            <option value="" disabled>Select exercise</option>
+            <option value="" disabled>Select Exercise</option>
             <option value="bicep_curl">Bicep Curl</option>
             <option value="lateral_raises">Lateral Raises</option>
             <option value="tricep_curls">Tricep Curls</option>
@@ -87,8 +87,8 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
             value={equipment}
             onChange={(e) => setEquipment(e.target.value)}
           >
-            <option value="" disabled>Select equipment</option>
-            <option value="free_weight">Free Weight</option>
+            <option value="" disabled>Select Equipment</option>
+            <option value="free_weight">Body Weight</option>
             <option value="machine">Machine</option>
             <option value="bodyweight">Bodyweight</option>
           </select>
@@ -109,7 +109,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
                   className="mt-0.5 accent-blue-500"
                 />
                 <div>
-                  <p className="text-sm font-medium text-white">Rule-based Analysis</p>
+                  <p className="text-sm font-medium text-white">Proportion Analysis</p>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Personalised instructions based on your height, weight and equipment !!!!!!!
                   </p>
@@ -129,16 +129,16 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white">Live Pose Detection</p>
+                    <p className="text-sm font-medium text-white">Pose Detection</p>
                     <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">
                       CV
                     </span>
                     {!poseAvailable && exercise && (
-                      <span className="text-xs text-gray-600">— Bicep Curl only</span>
+                      <span className="text-xs text-gray-600">— Bicep Curl only as of now.. other exercises coming real soon</span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Real-time joint tracking via MediaPipe · counts reps · live feedback
+                    Motion tracking via MediaPipe - counts reps · live feedback
                   </p>
                 </div>
               </label>

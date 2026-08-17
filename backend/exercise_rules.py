@@ -32,7 +32,7 @@ def generate_rule_based_instructions(exercise, equipment, body):
         reps -= 2
         rest -= 10
         tempo = "3-1-3"
-        form_tips.append("- Lighter body: use slightly slower tempo to maintain stability.")
+        form_tips.append("Lighter body: use slightly slower tempo to maintain stability.")
 
     # Height-based adjustments
     if body["height"] > 190:
@@ -43,7 +43,7 @@ def generate_rule_based_instructions(exercise, equipment, body):
         if exercise.lower() == "lateral raises":
             form_tips.append("- Avoid lifting arms too high to protect shoulder joints.")
     elif body["height"] < 160:
-        form_tips.append("- Short stature: ensure full range of motion for maximum effectiveness.")
+        form_tips.append("Short stature: ensure full range of motion for maximum effectiveness.")
 
     # Age-based adjustments
     if body.get("age") and body["age"] >= 50:
