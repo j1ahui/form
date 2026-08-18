@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PoseDetection from "./components/PoseDetection";
 
-const POSE_SUPPORTED = ["bicep_curl"];        // array in js (would be a list in python)
+const POSE_SUPPORTED = ["bicep_curl", "hammer_curl"];        // array in js (would be a list in python)
 
 function AnalyzeExercise() {
   const {state} = useLocation();
@@ -61,7 +61,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
   return (
     <>
       {/* Pose detection overlay */}
-      {showPose && <PoseDetection onClose={() => setShowPose(false)} />}
+      {showPose && (<PoseDetection exercise={exercise} onClose={() => setShowPose(false)} />)}
 
       <div className="min-h-screen bg-[#0f0f0f] text-white flex flex-col items-center justify-center px-6">
         <h1 className="text-4xl font-bold mb-2">Execute with Perfection</h1>
@@ -77,6 +77,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
           >
             <option value="" disabled>Select Exercise</option>
             <option value="bicep_curl">Bicep Curl</option>
+            <option value="hammer_curl">Hammer Curls</option>
             <option value="lateral_raises">Lateral Raises</option>
             <option value="tricep_curls">Tricep Curls</option>
           </select>

@@ -1,4 +1,3 @@
-
 // Fetches ML-based recommendations and renders them on dashboard
 
 import { useEffect, useState } from "react";

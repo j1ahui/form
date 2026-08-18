@@ -60,7 +60,7 @@ const STAGE = {
 }
 
 
-export default function PoseDetection({ onClose }) {
+export default function PoseDetection({ exercise, onClose }) {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const landmarkerRef = useRef(null);
@@ -450,7 +450,7 @@ export default function PoseDetection({ onClose }) {
           {/* Header */}
           <div className="w-full max-w-2xl flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-white font-semibold text-lg">Bicep Curl — Pose Analysis</h2>
+              <h2 className="text-white font-semibold text-lg">{exercise === "bicep_curl" ? "Bicep Curl" : "Hammer Curl"}</h2>
               <p className="text-gray-500 text-xs mt-0.5">MediaPipe · real-time joint tracking</p>
             </div>
             <button
