@@ -4,6 +4,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";    // PoseLandmarker detects human body landmarks using ML. filesetresolver class helps load wasm (webassembly) files that mp needs to run in browser
 
+import exerciseRules from "./pose/exerciseRules";
+
 // joint indices from MediaPipe Pose 
 // https://developers.google.com/mediapipe/solutions/vision/pose_landmarker
 
@@ -37,14 +39,14 @@ function angleBetween(a, b, c) {
     return Math.round(angle);
 }
 
-function getFeedback(angle, stage) {
-    if (angle > 160) { return { text: "Full extension - start curling up", color: "#22c55e" };} 
-    if (angle < 50) { return { text: "Full curl - squeeze at the top, then lower slowly", color: "#22c55e" };}
-    if (angle >= 60 && angle <= 100 && stage === "going_up") { return { text: "Curling through midpoint, keep driving up", color: "#3b82f6" };}
-    if (angle >= 60 && angle <= 100 && stage === "going_down") { return { text: "Lowering through midpoint - control the descent", color: "#3b82f6" };}
-    if (angle > 100 && stage === "going_down") { return { text: "Keep lowering for full range of motion", color: "#f59e0b" };}
-    return { text: "Keep going!", color: "#9ca3af"}
-}
+// function getFeedback(angle, stage) {
+//     if (angle > 160) { return { text: "Full extension - start curling up", color: "#22c55e" };} 
+//     if (angle < 50) { return { text: "Full curl - squeeze at the top, then lower slowly", color: "#22c55e" };}
+//     if (angle >= 60 && angle <= 100 && stage === "going_up") { return { text: "Curling through midpoint, keep driving up", color: "#3b82f6" };}
+//     if (angle >= 60 && angle <= 100 && stage === "going_down") { return { text: "Lowering through midpoint - control the descent", color: "#3b82f6" };}
+//     if (angle > 100 && stage === "going_down") { return { text: "Keep lowering for full range of motion", color: "#f59e0b" };}
+//     return { text: "Keep going!", color: "#9ca3af"}
+// }
 
 
 // ── Rep state machine ────────────────────────────────────────────────────────
@@ -61,6 +63,7 @@ const STAGE = {
 
 
 export default function PoseDetection({ exercise, onClose }) {
+    const rules = exerciseRules[exercise]
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const landmarkerRef = useRef(null);
@@ -377,7 +380,10 @@ export default function PoseDetection({ exercise, onClose }) {
 
           // ── Feedback ─────────────────────────────────────────────────────
 
-          const fb = getFeedback(elbowAngle, stageRef.current);
+          // const fb = getFeedback(elbowAngle, stageRef.current);
+          // setFeedback(fb);
+
+          const fb = rules.getFeedback(elbowAngle, stageRef.current);
           setFeedback(fb);
 
           armKps.forEach(idx => {
@@ -450,7 +456,7 @@ export default function PoseDetection({ exercise, onClose }) {
           {/* Header */}
           <div className="w-full max-w-2xl flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-white font-semibold text-lg">{exercise === "bicep_curl" ? "Bicep Curl" : "Hammer Curl"}</h2>
+              <h2 className="text-white font-semibold text-lg">{rules.name}</h2>
               <p className="text-gray-500 text-xs mt-0.5">MediaPipe · real-time joint tracking</p>
             </div>
             <button
