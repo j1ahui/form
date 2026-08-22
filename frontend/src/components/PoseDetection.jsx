@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";    // PoseLandmarker detects human body landmarks using ML. filesetresolver class helps load wasm (webassembly) files that mp needs to run in browser
 
 import exerciseRules from "./pose/exerciseRules";
+import STAGE from "./pose/stages";
 
 // joint indices from MediaPipe Pose 
 // https://developers.google.com/mediapipe/solutions/vision/pose_landmarker
@@ -42,16 +43,6 @@ function angleBetween(a, b, c) {
 
 // ── Rep state machine ────────────────────────────────────────────────────────
 // Valid rep = extension → midpoint up → full curl → midpoint down → extension
-
-const STAGE = {
-  WAITING: "waiting",
-  GOING_UP: "going_up",
-  PASSED_MID_UP: "passed_mid_up",
-  AT_TOP: "at_top",
-  GOING_DOWN: "going_down",
-  PASSED_MID_DOWN: "passed_mid_down",
-}
-
 
 export default function PoseDetection({ exercise, onClose }) {
     const rules = exerciseRules[exercise]
@@ -308,87 +299,32 @@ export default function PoseDetection({ exercise, onClose }) {
 
       // ── Calculate elbow angle ──────────────────────────────────────────────
 
-      const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];        // evaluates [MP.LEFT_SHOULDER] -> [11] then evaluates with lm lm[MP.LEFT_SHOULDER] (to index the lm array)
-      const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
-      const wrist = lm[isLeft ? MP.LEFT_WRIST : MP.RIGHT_WRIST];
-      const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
+      // const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];        // evaluates [MP.LEFT_SHOULDER] -> [11] then evaluates with lm lm[MP.LEFT_SHOULDER] (to index the lm array)
+      // const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
+      // const wrist = lm[isLeft ? MP.LEFT_WRIST : MP.RIGHT_WRIST];
+      // const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
 
-      const requiredLandmarks = exercise === "lateral_raises" ? [hip, shoulder, elbow] : [shoulder, elbow, wrist];
+      const measurement = rules.getAngle(lm, sideRef.current, MP, angleBetween);
 
-      const landmarksVisible = requiredLandmarks.every(point => point.visibility > 0.5);
+      const landmarksVisible = measurement.points.every(point => point.visibility > 0.5);
 
       if (landmarksVisible) {
-        const exerciseAngle = exercise === "lateral_raises" ? angleBetween(hip, shoulder, elbow) : angleBetween(shoulder, elbow, wrist);
+        const exerciseAngle = measurement.angle;
 
         setAngle(exerciseAngle);
 
-        let stage = stageRef.current;
+        const previousStage = stageRef.current;
 
-        if (exercise === "lateral_raises") {
+        const nextStage = rules.getNextStage(
+          previousStage, exerciseAngle
+        );
 
-          if (stage === STAGE.WAITING && exerciseAngle < 25) {
-            stage = STAGE.GOING_UP;
-          }
+        if (previousStage === STAGE.PASSED_MID_DOWN && nextStage === STAGE.GOING_UP) {repCountRef.current += 1; setRepCount(repCountRef.current)}
 
-          if (stage === STAGE.GOING_UP && exerciseAngle >= 45 && exerciseAngle <= 70) {
-            stage = STAGE.PASSED_MID_UP;
-          }
+        stageRef.current = nextStage;
 
-          if (stage === STAGE.PASSED_MID_UP && exerciseAngle >= 75) {
-            stage = STAGE.AT_TOP;
-          }
-
-          if (stage === STAGE.AT_TOP && exerciseAngle < 75) {
-            stage = STAGE.GOING_DOWN;
-          }
-
-          if (stage === STAGE.GOING_DOWN && exerciseAngle >=45 && exerciseAngle <= 70) {
-            stage = STAGE.PASSED_MID_DOWN;
-          }
-
-          if (stage === STAGE.PASSED_MID_DOWN && exerciseAngle < 25) {
-            repCountRef.current += 1;
-            setRepCount(repCountRef.current);
-
-            stage = STAGE.GOING_UP;
-          } 
-          
-        } else {
-
-          if (stage === STAGE.WAITING && exerciseAngle > 150) {                  // dict/object property access
-            stage = STAGE.GOING_UP;
-          }
-
-          if (stage === STAGE.GOING_UP && exerciseAngle >= 60 && exerciseAngle <= 100) {
-            stage = STAGE.PASSED_MID_UP;
-          }
-
-          if (stage === STAGE.PASSED_MID_UP && exerciseAngle < 50) {
-            stage = STAGE.AT_TOP;
-          }
-
-          if (stage === STAGE.AT_TOP && exerciseAngle >= 50) {
-            stage = STAGE.GOING_DOWN;
-          }
-
-          if (stage === STAGE.GOING_DOWN && exerciseAngle >= 60 && exerciseAngle <= 100) {
-            stage = STAGE.PASSED_MID_DOWN;
-          }
-
-          if (stage === STAGE.PASSED_MID_DOWN && exerciseAngle > 150) {
-            repCountRef.current += 1;
-            setRepCount(repCountRef.current);
-
-            stage = STAGE.GOING_UP;
-
-          }
-        }
-
-        stageRef.current = stage;
-
-
-        const fb = rules.getFeedback(exerciseAngle, stageRef.current);
-        setFeedback(fb);
+        const fb = rules.getFeedback(exerciseAngle, nextStage);
+        setFeedback(fb)
 
         armKps.forEach(idx => {
           const kp = lm[idx];
@@ -406,7 +342,7 @@ export default function PoseDetection({ exercise, onClose }) {
         // const ey = elbow.y * canvas.height;
         ctx.fillStyle = fb.color;
         ctx.font =  "bold 20px system-ui";
-        ctx.fillText(`${exerciseAngle}`, mx(elbow.x) + 14, py(elbow.y) - 12);            // text above joint
+        ctx.fillText(`${exerciseAngle}`, mx(measurement.points[1].x) + 14, py(measurement.points[1].y) - 12);            // text above joint
 
 
       }
