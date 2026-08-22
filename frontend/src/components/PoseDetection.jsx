@@ -1,5 +1,4 @@
 // real time bicep curl form analysis using MediaPipe Pose (lib from google - uses ml to detect human body from an image/video) via CDN (content delivery network - instead of installing mediapipe, you load directly from internet)
-// calcs elbow angle, counts reps, gives live feedback 
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";    // PoseLandmarker detects human body landmarks using ML. filesetresolver class helps load wasm (webassembly) files that mp needs to run in browser
@@ -16,6 +15,8 @@ const MP = {
     RIGHT_ELBOW: 14,
     LEFT_WRIST: 15,
     RIGHT_WRIST: 16,
+    LEFT_HIP: 23,
+    RIGHT_HIP: 24,
 };
 
 
@@ -38,16 +39,6 @@ function angleBetween(a, b, c) {
     if (angle > 180) angle = 360 - angle;               // elbow bend (0º - 180º)
     return Math.round(angle);
 }
-
-// function getFeedback(angle, stage) {
-//     if (angle > 160) { return { text: "Full extension - start curling up", color: "#22c55e" };} 
-//     if (angle < 50) { return { text: "Full curl - squeeze at the top, then lower slowly", color: "#22c55e" };}
-//     if (angle >= 60 && angle <= 100 && stage === "going_up") { return { text: "Curling through midpoint, keep driving up", color: "#3b82f6" };}
-//     if (angle >= 60 && angle <= 100 && stage === "going_down") { return { text: "Lowering through midpoint - control the descent", color: "#3b82f6" };}
-//     if (angle > 100 && stage === "going_down") { return { text: "Keep lowering for full range of motion", color: "#f59e0b" };}
-//     return { text: "Keep going!", color: "#9ca3af"}
-// }
-
 
 // ── Rep state machine ────────────────────────────────────────────────────────
 // Valid rep = extension → midpoint up → full curl → midpoint down → extension
@@ -183,13 +174,6 @@ export default function PoseDetection({ exercise, onClose }) {
     //         minDetectionConfidence: 0.6,                // detections below 60% confidence are discarded
     //         minTrackingConfidence: 0.5,                 // after detecting, mediapipe starts tracking - option controls how confident the tracker must be to continue tracking 
 
-    //     });
-
-    //     pose.onResults(onResults);
-    //     poseRef.current = pose;
-    //     startCamera(pose);
-
-    // }
 
     function startCamera() {
         navigator.mediaDevices                          // browser provided object that gives js access to users camera and mic (a part of web api)
@@ -298,9 +282,6 @@ export default function PoseDetection({ exercise, onClose }) {
       //   [13, 15]   // elbow → wrist
       // ]
 
-      // const drawingUtils = new DrawingUtils(ctx);
-      // const mirrored = lm.map(p => ({...p, x: 1 - p.x}));
-
       // drawingUtils.drawConnectors(mirrored, PoseLandmarker.POSE_CONNECTIONS, {      // draws lines connecting body joints
       //   color: "rgba(255,255,255,0.2)",
       //   lineWidth: 2,
@@ -330,8 +311,119 @@ export default function PoseDetection({ exercise, onClose }) {
       const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];        // evaluates [MP.LEFT_SHOULDER] -> [11] then evaluates with lm lm[MP.LEFT_SHOULDER] (to index the lm array)
       const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
       const wrist = lm[isLeft ? MP.LEFT_WRIST : MP.RIGHT_WRIST];
+      const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
 
-      // landmark object:
+      const requiredLandmarks = exercise === "lateral_raises" ? [hip, shoulder, elbow] : [shoulder, elbow, wrist];
+
+      const landmarksVisible = requiredLandmarks.every(point => point.visibility > 0.5);
+
+      if (landmarksVisible) {
+        const exerciseAngle = exercise === "lateral_raises" ? angleBetween(hip, shoulder, elbow) : angleBetween(shoulder, elbow, wrist);
+
+        setAngle(exerciseAngle);
+
+        let stage = stageRef.current;
+
+        if (exercise === "lateral_raises") {
+
+          if (stage === STAGE.WAITING && exerciseAngle < 25) {
+            stage = STAGE.GOING_UP;
+          }
+
+          if (stage === STAGE.GOING_UP && exerciseAngle >= 45 && exerciseAngle <= 70) {
+            stage = STAGE.PASSED_MID_UP;
+          }
+
+          if (stage === STAGE.PASSED_MID_UP && exerciseAngle >= 75) {
+            stage = STAGE.AT_TOP;
+          }
+
+          if (stage === STAGE.AT_TOP && exerciseAngle < 75) {
+            stage = STAGE.GOING_DOWN;
+          }
+
+          if (stage === STAGE.GOING_DOWN && exerciseAngle >=45 && exerciseAngle <= 70) {
+            stage = STAGE.PASSED_MID_DOWN;
+          }
+
+          if (stage === STAGE.PASSED_MID_DOWN && exerciseAngle < 25) {
+            repCountRef.current += 1;
+            setRepCount(repCountRef.current);
+
+            stage = STAGE.GOING_UP;
+          } 
+          
+        } else {
+
+          if (stage === STAGE.WAITING && exerciseAngle > 150) {                  // dict/object property access
+            stage = STAGE.GOING_UP;
+          }
+
+          if (stage === STAGE.GOING_UP && exerciseAngle >= 60 && exerciseAngle <= 100) {
+            stage = STAGE.PASSED_MID_UP;
+          }
+
+          if (stage === STAGE.PASSED_MID_UP && exerciseAngle < 50) {
+            stage = STAGE.AT_TOP;
+          }
+
+          if (stage === STAGE.AT_TOP && exerciseAngle >= 50) {
+            stage = STAGE.GOING_DOWN;
+          }
+
+          if (stage === STAGE.GOING_DOWN && exerciseAngle >= 60 && exerciseAngle <= 100) {
+            stage = STAGE.PASSED_MID_DOWN;
+          }
+
+          if (stage === STAGE.PASSED_MID_DOWN && exerciseAngle > 150) {
+            repCountRef.current += 1;
+            setRepCount(repCountRef.current);
+
+            stage = STAGE.GOING_UP;
+
+          }
+        }
+
+        stageRef.current = stage;
+
+
+        const fb = rules.getFeedback(exerciseAngle, stageRef.current);
+        setFeedback(fb);
+
+        armKps.forEach(idx => {
+          const kp = lm[idx];
+          if (kp.visibility > 0.3) {
+            ctx.beginPath();
+            ctx.arc(mx(kp.x), py(kp.y), 8, 0, 2 * Math.PI);
+            ctx.fillStyle = fb.color;
+            ctx.fill();
+            
+          }
+        })
+    
+
+        // const ex = (1 - elbow.x) * canvas.width;        // x and y from results dict 
+        // const ey = elbow.y * canvas.height;
+        ctx.fillStyle = fb.color;
+        ctx.font =  "bold 20px system-ui";
+        ctx.fillText(`${exerciseAngle}`, mx(elbow.x) + 14, py(elbow.y) - 12);            // text above joint
+
+
+      }
+      // calculate shoulder angle
+
+      function getShoulderAngle(lm, isLeft) {
+        const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
+        const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];
+        const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
+
+        return angleBetween(hip, shoulder, elbow);
+
+
+
+      }
+
+      // landmark object (list of dicts in results dict):
       // {
       //     x: 0.42,
       //     y: 0.61,
@@ -339,73 +431,22 @@ export default function PoseDetection({ exercise, onClose }) {
       //     visibility: 0.96
       // }
 
-      if (shoulder.visibility > 0.5 && elbow.visibility > 0.5 && wrist.visibility > 0.5) {
-          const elbowAngle = angleBetween(shoulder, elbow, wrist);
-          setAngle(elbowAngle);
-
-          // ── Rep counting ─────────────────────────────────────────────────────
-
-          let stage = stageRef.current;
-
-          if (stage === STAGE.WAITING && elbowAngle > 150) {                  // dict/object property access
-            stage = STAGE.GOING_UP;
-          }
-
-          if (stage === STAGE.GOING_UP && elbowAngle >= 60 && elbowAngle <= 100) {
-            stage = STAGE.PASSED_MID_UP;
-          }
-
-          if (stage === STAGE.PASSED_MID_UP && elbowAngle < 50) {
-            stage = STAGE.AT_TOP;
-          }
-
-          if (stage === STAGE.AT_TOP && elbowAngle >= 50) {
-            stage = STAGE.GOING_DOWN;
-          }
-
-          if (stage === STAGE.GOING_DOWN && elbowAngle >= 60 && elbowAngle <= 100) {
-            stage = STAGE.PASSED_MID_DOWN;
-          }
-
-          if (stage === STAGE.PASSED_MID_DOWN && elbowAngle > 150) {
-            repCountRef.current += 1;
-            setRepCount(repCountRef.current);
-            stage = STAGE.GOING_UP;
-
-          }
-
-          stageRef.current = stage;
 
 
-
-          // ── Feedback ─────────────────────────────────────────────────────
-
-          // const fb = getFeedback(elbowAngle, stageRef.current);
+          // const fb = rules.getFeedback(exerciseAngle, stageRef.current);
           // setFeedback(fb);
 
-          const fb = rules.getFeedback(elbowAngle, stageRef.current);
-          setFeedback(fb);
-
-          armKps.forEach(idx => {
-            const kp = lm[idx];
-            if (kp.visibility > 0.3) {
-              ctx.beginPath();
-              ctx.arc(mx(kp.x), py(kp.y), 8, 0, 2 * Math.PI);
-              ctx.fillStyle = fb.color;
-              ctx.fill();
+          // armKps.forEach(idx => {
+          //   const kp = lm[idx];
+          //   if (kp.visibility > 0.3) {
+          //     ctx.beginPath();
+          //     ctx.arc(mx(kp.x), py(kp.y), 8, 0, 2 * Math.PI);
+          //     ctx.fillStyle = fb.color;
+          //     ctx.fill();
               
-            }
-          })
+          //   }
+          // })
       
-
-          // const ex = (1 - elbow.x) * canvas.width;        // x and y from results dict 
-          // const ey = elbow.y * canvas.height;
-          ctx.fillStyle = fb.color;
-          ctx.font =  "bold 20px system-ui";
-          ctx.fillText(`${elbowAngle}`, mx(elbow.x) + 14, py(elbow.y) - 12);            // text above joint
-
-    }
-
     // function processFrame(pose) {
     //     const loop = async () => {
     //         if (videoRef.current && videoRef.current.readyState === 4) {            // 4 means enough data to play the entire video (browser defined value)
@@ -490,9 +531,9 @@ export default function PoseDetection({ exercise, onClose }) {
           {/* Stats row */}
           <div className="w-full max-w-2xl grid grid-cols-3 gap-3 mt-4">
     
-            {/* Elbow angle */}
+            {/* Angle */}
             <div className="bg-[#1a1a1a] rounded-xl p-4 text-center">
-              <p className="text-gray-500 text-xs mb-1">Elbow Angle</p>
+              <p className="text-gray-500 text-xs mb-1">{rules.angleType === "shoulder" ? "Shoulder Angle" : "Elbow Angle"}</p>
               <p className="text-white text-3xl font-bold">
                 {angle !== null ? `${angle}°` : "—"}
               </p>

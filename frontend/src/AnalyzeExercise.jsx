@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PoseDetection from "./components/PoseDetection";
 
-const POSE_SUPPORTED = ["bicep_curl", "hammer_curl"];        // array in js (would be a list in python)
+const POSE_SUPPORTED = ["bicep_curl", "hammer_curl", "lateral_raises"];        // array in js (would be a list in python)
 
 function AnalyzeExercise() {
   const {state} = useLocation();
