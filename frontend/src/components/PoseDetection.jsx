@@ -6,8 +6,7 @@ import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-
 import exerciseRules from "./pose/exerciseRules";
 import STAGE from "./pose/stages";
 
-// joint indices from MediaPipe Pose 
-// https://developers.google.com/mediapipe/solutions/vision/pose_landmarker
+// joint indices from MediaPipe Pose - https://developers.google.com/mediapipe/solutions/vision/pose_landmarker
 
 const MP = {
     LEFT_SHOULDER: 11,
@@ -21,7 +20,7 @@ const MP = {
 };
 
 
-function getArmConnections(isLeft) {
+function getArmConnections(isLeft) {      // visuals 
   return isLeft ? [[MP.LEFT_SHOULDER, MP.LEFT_ELBOW], [MP.LEFT_ELBOW, MP.LEFT_WRIST]] : [[MP.RIGHT_SHOULDER, MP.RIGHT_ELBOW], [MP.RIGHT_ELBOW, MP.RIGHT_WRIST]];
 }
 
@@ -41,8 +40,6 @@ function angleBetween(a, b, c) {
     return Math.round(angle);
 }
 
-// ── Rep state machine ────────────────────────────────────────────────────────
-// Valid rep = extension → midpoint up → full curl → midpoint down → extension
 
 export default function PoseDetection({ exercise, onClose }) {
     const rules = exerciseRules[exercise]
@@ -64,8 +61,8 @@ export default function PoseDetection({ exercise, onClose }) {
     const sideRef = useRef("left")
     sideRef.current = side;
 
-    // ── Init PoseLandmarker ──────────────────────────────────────────────────
-    useEffect(() => {
+
+    useEffect(() => {                 // initialising PoseLandmarker
       let cancelled = false;          // used to stop the async func from continuing after the react component has unmounted
 
       async function init() {
@@ -111,61 +108,7 @@ export default function PoseDetection({ exercise, onClose }) {
       };
     }, []);
 
-    // ── Load MediaPipe from CDN ───────────────────────────────────────────────
-
-    // useEffect(() => {
-    //     const script1 = document.createElement("script");                                                       // creates a html element but in js. only loads mediapipe when component is used. document is a built-in object (represents and references html page that has been loaded)
-    //     script1.src = "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js";                   // <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    //     script1.crossOrigin = "anonymous";                                                                      // tells browser its ok to load this script from another domain without sending user credentials 
-
-    //     const script2 = document.createElement("script");
-    //     script2.src = "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js";             // <script src="..."></script>
-    //     script2.crossOrigin = "anonymous";
-
-    //     const script3 = document.createElement("script");
-    //     script3.src = "https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js";
-    //     script3.crossOrigin = "anonymous";
-
-    //     script3.onload = () => initPose();                              // assigning a function to onload property. onload and onerror are callback properties (giving browser functions to call when those events occur)
-    //     script3.onerror = () => setStatus("error");
-
-    //     document.body.appendChild(script1);                 // method that adds one html element as a child of another (take script (browser knows to download) and place it inside <body>)
-    //     document.body.appendChild(script2);
-    //     document.body.appendChild(script3);
-
-    //     // const script = document.createElement("script");
-    //     // script.src = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
-    //     // script.crossOrigin = "anonymous";
-    //     // script.onload = () => initPose();
-    //     // script.onerror = () => setStatus("error");
-    //     // document.body.appendChild(script);
-
-    //     return () => {                                                      // function cleanup (used specially for useEffect()). cleanup removes extra memory, bugs, duplicate libs
-    //         [script1, script2, script3].forEach(s => {
-    //             if (document.body.contains(s)) document.body.removeChild(s);        // contains checks if script is actually inside body, if yes, run removechild()
-    //         });
-    //         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    //         if (poseRef.current) poseRef.current.close?.();                             // only call close() if it exists (close() releases mediapipe resources)
-    //     };
-
-    // }, []);
-
-    // function initPose() {
-    //     if (!window.Pose) {setStatus("error"); return; }
-
-    //     const pose = new window.Pose({                                          // from https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js. creates a Pose object. attached to window as it was loaded from a <script> tag instead of imported (came from global browser environment)
-    //         locateFile: (file) =>                                               // callback func
-    //             `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,         // mediapipe stores this func and calls it whenever it needs to find a pose inits internal files
-    //     });
-
-    //     pose.setOptions({                               // configures how mediapipe pose model behaves 
-    //         modelComplexity: 1,                         // balanced model                                
-    //         smoothLandmarks: true,                      // applies smoothing to reduce noise 
-    //         enableSegmentation: false,                  // mediapipe predicts which pixels belong to the person (app only uses body anyways)
-    //         minDetectionConfidence: 0.6,                // detections below 60% confidence are discarded
-    //         minTrackingConfidence: 0.5,                 // after detecting, mediapipe starts tracking - option controls how confident the tracker must be to continue tracking 
-
-
+  
     function startCamera() {
         navigator.mediaDevices                          // browser provided object that gives js access to users camera and mic (a part of web api)
             .getUserMedia({ video: { width: 640, height: 480 } })
@@ -209,17 +152,15 @@ export default function PoseDetection({ exercise, onClose }) {
     }
 
 
-    // ── Draw + analyze ───────────────────────────────────────────────────────
-
     function drawResults(results, canvas, video) {
       const ctx = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      ctx.save();
-      ctx.scale(-1, 1);
+      ctx.save();                                       // draw mirrored video. save() saves current drawing settings (colours, font)
+      ctx.scale(-1, 1);                                 // flipping horizontally 
       ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-      ctx.restore();
+      ctx.restore();                                    // restore setting saved by save() - everything would still be mirrored without it
 
       if (!results.landmarks || results.landmarks.length === 0) return;         // .length gives number of items in array. return = stop this function
       
@@ -260,6 +201,8 @@ export default function PoseDetection({ exercise, onClose }) {
         }
       });
 
+      
+
       // kp looks like (as const lm = results.landmarks[0];  and kp = lm[idx])
       // {
       //   x: 0.42,
@@ -273,16 +216,6 @@ export default function PoseDetection({ exercise, onClose }) {
       //   [13, 15]   // elbow → wrist
       // ]
 
-      // drawingUtils.drawConnectors(mirrored, PoseLandmarker.POSE_CONNECTIONS, {      // draws lines connecting body joints
-      //   color: "rgba(255,255,255,0.2)",
-      //   lineWidth: 2,
-      // });
-      // drawingUtils.drawLandmarks(mirrored, {                                        // draws individual body points
-      //   color: "#3b82f6",
-      //   fillColor: "#1d4ed8",
-      //   lineWidth: 1,
-      //   radius: 4,
-      // });
 
         // results = {
         //     image: ...,
@@ -295,9 +228,6 @@ export default function PoseDetection({ exercise, onClose }) {
         //         ...
         //     ]
         // };
-
-
-      // ── Calculate elbow angle ──────────────────────────────────────────────
 
       // const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];        // evaluates [MP.LEFT_SHOULDER] -> [11] then evaluates with lm lm[MP.LEFT_SHOULDER] (to index the lm array)
       // const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
@@ -313,17 +243,28 @@ export default function PoseDetection({ exercise, onClose }) {
 
         setAngle(exerciseAngle);
 
-        const previousStage = stageRef.current;
+        // const previousStage = stageRef.current;
 
-        const nextStage = rules.getNextStage(
-          previousStage, exerciseAngle
+        // const nextStage = rules.getNextStage(
+        //   previousStage, exerciseAngle
+        // );
+
+        // if (previousStage === STAGE.PASSED_MID_DOWN && nextStage === STAGE.GOING_UP) {repCountRef.current += 1; setRepCount(repCountRef.current)}
+
+        // stageRef.current = nextStage;
+
+        const result = rules.getNextStage(
+          stageRef.current, exerciseAngle
         );
 
-        if (previousStage === STAGE.PASSED_MID_DOWN && nextStage === STAGE.GOING_UP) {repCountRef.current += 1; setRepCount(repCountRef.current)}
+        stageRef.current = result.stage;
 
-        stageRef.current = nextStage;
+        if (result.repCompleted) {
+          repCountRef.current += 1;
+          setRepCount(repCountRef.current);
+        }
 
-        const fb = rules.getFeedback(exerciseAngle, nextStage);
+        const fb = rules.getFeedback(exerciseAngle, result.stage);
         setFeedback(fb)
 
         armKps.forEach(idx => {
@@ -343,10 +284,8 @@ export default function PoseDetection({ exercise, onClose }) {
         ctx.fillStyle = fb.color;
         ctx.font =  "bold 20px system-ui";
         ctx.fillText(`${exerciseAngle}`, mx(measurement.points[1].x) + 14, py(measurement.points[1].y) - 12);            // text above joint
-
-
       }
-      // calculate shoulder angle
+
 
       function getShoulderAngle(lm, isLeft) {
         const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
@@ -354,9 +293,6 @@ export default function PoseDetection({ exercise, onClose }) {
         const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
 
         return angleBetween(hip, shoulder, elbow);
-
-
-
       }
 
       // landmark object (list of dicts in results dict):
@@ -366,58 +302,8 @@ export default function PoseDetection({ exercise, onClose }) {
       //     z: -0.12,
       //     visibility: 0.96
       // }
+    
 
-
-
-          // const fb = rules.getFeedback(exerciseAngle, stageRef.current);
-          // setFeedback(fb);
-
-          // armKps.forEach(idx => {
-          //   const kp = lm[idx];
-          //   if (kp.visibility > 0.3) {
-          //     ctx.beginPath();
-          //     ctx.arc(mx(kp.x), py(kp.y), 8, 0, 2 * Math.PI);
-          //     ctx.fillStyle = fb.color;
-          //     ctx.fill();
-              
-          //   }
-          // })
-      
-    // function processFrame(pose) {
-    //     const loop = async () => {
-    //         if (videoRef.current && videoRef.current.readyState === 4) {            // 4 means enough data to play the entire video (browser defined value)
-    //             await pose.send({ image: videoRef.current });                       // { image: videoRef.current } = js object with property called image
-    //         }
-    //         animFrameRef.current = requestAnimationFrame(loop)                      // run same function before next refresh - designed for animations as it lets the browser schedule work
-    //     };
-    //     loop();         // function call
-    // }
-
-    // const onResults = useCallback((results) => {                // creating a function and storing it in onResults variable (usecallback returns a function)
-    //     const canvas = canvasRef.current;
-    //     if (!canvas) return;
-    //     const ctx = canvas.getContext("2d");
-    //     canvas.width = results.image.width;
-    //     canvas.height = results.image.height;
-
-    //     ctx.save();                                 // draw mirrored video. save() saves current drawing settings (colours, font)
-    //     ctx.scale(-1, 1);                           // flipping horizontally 
-    //     ctx.drawImage(results.image, -canvas.width, 0, canvas.width, canvas.height);
-    //     ctx.restore();                              // restore setting saved by save() - everything would still be mirrored without it
-
-    //     if (!results.poseLandmarks) return;         // results is a js object(dict) returned by mediapipe 
-    //     const lm = results.poseLandmarks;           // dict access 
-
-
-        // ── Draw skeleton ──────────────────────────────────────────────────────
-        
-        // if (window.drawConnectors && window.POSE_CONNECTIONS) {             // checks for truthy properties ("if both properties are available, execute the code"). POSE_CONNECTIONS = an array of landmark pairs used by drawconnectors to know which joins to connect 
-        //     const mirrored = lm.map(p => ({ ...p, x: 1 - p.x }));           // mirror landmarks for display. poseLandmarks keys value is a list with dict with keys x, y, visibility. 1 - p.x scales values 
-
-        //     window.drawConnectors(ctx, mirrored, window.POSE_CONNECTIONS, {     // both a function and a property (value of property is a function). accessing a property's value (which is a function in this case)
-        //         color: "rgba(255,255,255,0.2)",
-        //         lineWidth: 2,
-        //     });        
     }
 
     function resetReps() {

@@ -12,7 +12,7 @@ function getElbowAngle(lm, side, MP, angleBetween) {
 }
 
 function getShoulderAngle(lm, side, MP, angleBetween) {
-    const hip = lm[side === "left" ? MP.LEFT_HIP : MP.RIGHT.HIP];
+    const hip = lm[side === "left" ? MP.LEFT_HIP : MP.RIGHT_HIP];
     const shoulder = lm[side === "left" ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];
     const elbow = lm[side === "left" ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
     
@@ -31,13 +31,17 @@ const exerciseRules = {
            return getElbowAngle(lm, side, MP, angleBetween) 
         },
         getNextStage(stage, angle) {
+
+          let repCompleted = false;
+
           if (stage === STAGE.WAITING && angle > 150) {stage = STAGE.GOING_UP;}
           if (stage === STAGE.GOING_UP && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_UP;}
           if (stage === STAGE.PASSED_MID_UP && angle < 50) {stage = STAGE.AT_TOP;}
           if (stage === STAGE.AT_TOP && angle >= 50) {stage = STAGE.GOING_DOWN;}
           if (stage === STAGE.GOING_DOWN && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_DOWN;}
-          if (stage === STAGE.PASSED_MID_DOWN && angle > 150) {stage = STAGE.GOING_UP;}
-          return stage;
+          if (stage === STAGE.PASSED_MID_DOWN && angle > 150) {repCompleted = true; stage = STAGE.GOING_UP;}
+          
+          return {stage, repCompleted};
         },
         getFeedback(angle, stage) {
             if (angle > 160) { return { text: "Full extension - start curling up", color: "#22c55e" };} 
@@ -57,14 +61,17 @@ const exerciseRules = {
             return getElbowAngle(lm, side, MP, angleBetween)
         },
         getNextStage(stage, angle) {
+
+            let repCompleted = false;
+
             if (stage === STAGE.WAITING && angle > 150) {stage = STAGE.GOING_UP;}
             if (stage === STAGE.GOING_UP && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_UP;}
             if (stage === STAGE.PASSED_MID_UP && angle < 50) {stage = STAGE.AT_TOP;}
             if (stage === STAGE.AT_TOP && angle >= 50) {stage = STAGE.GOING_DOWN;}
             if (stage === STAGE.GOING_DOWN && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_DOWN;}
-            if (stage === STAGE.PASSED_MID_DOWN && angle > 150) {stage = STAGE.GOING_UP;}
+            if (stage === STAGE.PASSED_MID_DOWN && angle > 150) {repCompleted = true; stage = STAGE.GOING_UP;}
             
-            return stage;
+            return {stage, repCompleted};
         },
         getFeedback(angle, stage) {
             if (angle > 160) { return { text: "Full extension - start curling up", color: "#22c55e" };} 
@@ -85,14 +92,17 @@ const exerciseRules = {
             return getShoulderAngle(lm, side, MP, angleBetween)
         },
         getNextStage(stage, angle) {
+
+            let repCompleted = false; 
+
             if (stage === STAGE.WAITING && angle < 25) {stage = STAGE.GOING_UP;}
             if (stage === STAGE.GOING_UP && angle >= 45 && angle <= 70) {stage = STAGE.PASSED_MID_UP;}
             if (stage === STAGE.PASSED_MID_UP && angle >= 75) {stage = STAGE.AT_TOP;}
             if (stage === STAGE.AT_TOP && angle < 75) {stage = STAGE.GOING_DOWN;}
             if (stage === STAGE.GOING_DOWN && angle >=45 && angle <= 70) {stage = STAGE.PASSED_MID_DOWN;}
-            if (stage === STAGE.PASSED_MID_DOWN && angle < 25) {stage = STAGE.GOING_UP;} 
+            if (stage === STAGE.PASSED_MID_DOWN && angle < 25) {repCompleted = true; stage = STAGE.GOING_UP;} 
             
-            return stage;
+            return {stage, repCompleted};
         },
         getFeedback(angle, stage) {
             if (angle < 25) { return { text: "Arms down - start raising", color: "#22c55e"};}
