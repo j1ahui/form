@@ -20,6 +20,11 @@ def generate_rule_based_instructions(exercise, equipment, body):
             "Keep your elbows close to your sides and curl the dumbbells toward your shoulders without swinging your body.",
             "Lower the dumbbells slowly and under control until your arms are fully extended."
         ],
+        "shoulder_press": [
+            "Sit or stand with your feet shoulder-width apart and hold the dumbbells at shoulder height with your palms facing forward.",
+            "Press the dumbbells overhead until your arms are full extended, keeping your core braces without excessive arching of your back.",
+            "Lower the dumbbells slowly and under control back to shoulder height."
+        ]
     }
 
     # Default sets/reps/rest

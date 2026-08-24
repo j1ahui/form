@@ -27,7 +27,7 @@ const exerciseRules = {
     bicep_curl: {
         name: "Bicep Curl",
         angleType: "elbow",
-        getAngle(lm, side, MP, angleBetween) {
+        getAngle(lm, side, MP, angleBetween) {                  // method (a function stored as a property of an object)
            return getElbowAngle(lm, side, MP, angleBetween) 
         },
         getNextStage(stage, angle) {
@@ -112,6 +112,36 @@ const exerciseRules = {
             return {text: "Keep goingg!", color: "#22c55e"};
         },
 
+    },
+
+    shoulder_press: {
+        name: "Shoulder Press",
+        angleType: "elbow",
+        getAngle(lm, side, MP, angleBetween) {
+            return getElbowAngle(lm, side, MP, angleBetween)
+        },
+        getNextStage(stage, angle) {
+            let repCompleted = false;
+
+            if (stage === STAGE.WAITING && angle >= 70 && angle <= 110) {stage = STAGE.GOING_UP;}
+            if (stage === STAGE.GOING_UP && angle >= 120 && angle <= 150) {stage = STAGE.PASSED_MID_UP;}
+            if (stage === STAGE.PASSED_MID_UP && angle > 150) {stage = STAGE.AT_TOP;}
+            if (stage === STAGE.AT_TOP  && angle <= 150) {stage = STAGE.GOING_DOWN;}
+            if (stage === STAGE.GOING_DOWN && angle >= 70 && angle <= 150) {stage = STAGE.PASSED_MID_DOWN;}
+            if (stage === STAGE.PASSED_MID_DOWN && angle <= 110) {repCompleted = true; stage = STAGE.GOING_UP;}
+            
+            return {stage, repCompleted};
+            
+        },
+        getFeedback(angle, stage) {
+            if (angle >= 160) { return { text: "Arms extended - lower slowly", color: "#22c55e"};}
+            if (angle <= 90) { return { text: "Elbows bent - press upwards", color: "#22c55e"};}
+            if (angle >= 120 && stage === STAGE.GOING_UP) { return { text: "Keep pressing upwards", color: "#22c55e"};}
+            if (angle >= 120 && stage === stage.GOING_DOWN) { return { text: "Lower with control", color: "#22c55e"};}
+            return { text: "Keeeep going", color: "#22c55e"};
+        },
+
+        
     },
     
 

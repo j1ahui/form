@@ -71,3 +71,8 @@
     //     };
     //     loop();         // function call
     // }
+
+      // const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];        // evaluates [MP.LEFT_SHOULDER] -> [11] then evaluates with lm lm[MP.LEFT_SHOULDER] (to index the lm array)
+      // const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
+      // const wrist = lm[isLeft ? MP.LEFT_WRIST : MP.RIGHT_WRIST];
+      // const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];

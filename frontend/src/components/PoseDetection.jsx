@@ -169,9 +169,8 @@ export default function PoseDetection({ exercise, onClose }) {
       const mx = x => (1 - x) * canvas.width;       // converts mediapipes normalized coordinates into canvas pixel coordinates 
       const py = y => y * canvas.height;
 
-      // ── Arm-only skeleton ─────────────────────────────────────────────────
 
-      const connections = getArmConnections(isLeft);
+      const connections = getArmConnections(isLeft);      // arm skeleton
       ctx.strokeStyle = "rgba(255,255,255,0.4)";
       ctx.lineWidth = 3;
       connections.forEach(([i, j]) => {                   // array destructuring. [i, j] = [11, 13] (a pair of landmarks)
@@ -185,7 +184,6 @@ export default function PoseDetection({ exercise, onClose }) {
         }
       });
 
-      // ── Arm keypoints ─────────────────────────────────────────────────────
 
       const armKps = getArmKeypoints(isLeft);       // [11, 13, 15]
       armKps.forEach(idx => {
@@ -201,8 +199,6 @@ export default function PoseDetection({ exercise, onClose }) {
         }
       });
 
-      
-
       // kp looks like (as const lm = results.landmarks[0];  and kp = lm[idx])
       // {
       //   x: 0.42,
@@ -216,7 +212,6 @@ export default function PoseDetection({ exercise, onClose }) {
       //   [13, 15]   // elbow → wrist
       // ]
 
-
         // results = {
         //     image: ...,
         //     landmarks: [
@@ -229,11 +224,6 @@ export default function PoseDetection({ exercise, onClose }) {
         //     ]
         // };
 
-      // const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];        // evaluates [MP.LEFT_SHOULDER] -> [11] then evaluates with lm lm[MP.LEFT_SHOULDER] (to index the lm array)
-      // const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
-      // const wrist = lm[isLeft ? MP.LEFT_WRIST : MP.RIGHT_WRIST];
-      // const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
-
       const measurement = rules.getAngle(lm, sideRef.current, MP, angleBetween);
 
       const landmarksVisible = measurement.points.every(point => point.visibility > 0.5);
@@ -242,16 +232,6 @@ export default function PoseDetection({ exercise, onClose }) {
         const exerciseAngle = measurement.angle;
 
         setAngle(exerciseAngle);
-
-        // const previousStage = stageRef.current;
-
-        // const nextStage = rules.getNextStage(
-        //   previousStage, exerciseAngle
-        // );
-
-        // if (previousStage === STAGE.PASSED_MID_DOWN && nextStage === STAGE.GOING_UP) {repCountRef.current += 1; setRepCount(repCountRef.current)}
-
-        // stageRef.current = nextStage;
 
         const result = rules.getNextStage(
           stageRef.current, exerciseAngle
@@ -278,33 +258,21 @@ export default function PoseDetection({ exercise, onClose }) {
           }
         })
     
-
         // const ex = (1 - elbow.x) * canvas.width;        // x and y from results dict 
         // const ey = elbow.y * canvas.height;
         ctx.fillStyle = fb.color;
         ctx.font =  "bold 20px system-ui";
         ctx.fillText(`${exerciseAngle}`, mx(measurement.points[1].x) + 14, py(measurement.points[1].y) - 12);            // text above joint
       }
-
-
-      function getShoulderAngle(lm, isLeft) {
-        const hip = lm[isLeft ? MP.LEFT_HIP : MP.RIGHT_HIP];
-        const shoulder = lm[isLeft ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];
-        const elbow = lm[isLeft ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
-
-        return angleBetween(hip, shoulder, elbow);
-      }
-
-      // landmark object (list of dicts in results dict):
-      // {
-      //     x: 0.42,
-      //     y: 0.61,
-      //     z: -0.12,
-      //     visibility: 0.96
-      // }
-    
-
     }
+
+    // landmark object (list of dicts in results dict):
+    // {
+    //     x: 0.42,
+    //     y: 0.61,
+    //     z: -0.12,
+    //     visibility: 0.96
+    // }
 
     function resetReps() {
         repCountRef.current = 0;
@@ -312,7 +280,6 @@ export default function PoseDetection({ exercise, onClose }) {
         stageRef.current = STAGE.WAITING;
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
     
