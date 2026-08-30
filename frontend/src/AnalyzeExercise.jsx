@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PoseDetection from "./components/PoseDetection";
 
-const POSE_SUPPORTED = ["bicep_curl", "hammer_curl", "lateral_raises", "shoulder_press"];        // array in js (would be a list in python)
+const POSE_SUPPORTED = ["bicep_curl", "hammer_curl", "lateral_raises", "shoulder_press", "bench_press"];        // array in js (would be a list in python)
 
 function AnalyzeExercise() {
   const {state} = useLocation();
@@ -81,6 +81,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
             <option value="lateral_raises">Lateral Raises</option>
             <option value="tricep_curls">Tricep Curls</option>
             <option value="shoulder_press">Shoulder Press</option>
+            <option value="bench_press">Bench Press</option>
           </select>
 
           {/* Equipment */}

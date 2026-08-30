@@ -143,6 +143,36 @@ const exerciseRules = {
 
         
     },
+
+    bench_press: {
+        name: "Bench Press",
+        angleType: "elbow",
+        getAngle(lm, side, MP, angleBetween) {
+            return getElbowAngle(lm, side, MP, angleBetween)
+        },
+        getNextStage(stage, angle) {
+
+            let repCompleted = false;
+
+            if (stage === STAGE.WAITING && angle > 150) {stage = STAGE.GOING_DOWN;}
+            if (stage === STAGE.GOING_DOWN && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_DOWN;}
+            if (stage === STAGE.PASSED_MID_DOWN && angle < 50) {stage = STAGE.AT_BOTTOM;}
+            if (stage === STAGE.AT_BOTTOM && angle >= 50) {stage = STAGE.GOING_UP;}
+            if (stage === STAGE.GOING_DOWN && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_UP;}
+            if (stage === STAGE.PASSED_MID_UP && angle > 150) {repCompleted = true; stage = STAGE.GOING_DOWN;}
+
+            return {stage, repCompleted}
+        },
+        getFeedback(angle, stage) {
+            if (angle > 160) { return { text: "Arms extended - lower the bar", color: "#22c55e"};}
+            if (angle < 50) { return { text: "Bottom position - press upward", color: "#22c55e"};}
+            if (angle >= 60 && angle <= 100 && stage === STAGE.GOING_DOWN) { return { text: "Lowering - keep the movement controlled", color: "#22c55e"};}
+            if (angle >= 60 && angle <= 100 && stage === STAGE.GOING_UP) { return { text: "Pressing upward - keep pushing", color: "#22c55e"};}
+            if (angle > 100 && stage === STAGE.GOING_DOWN) { return { text: "Keep lowering for full range of motion", color: "#22c55e"};}
+
+            return {text: "Keep going!", color: "#22c55e"};
+        }
+    }
     
 
 

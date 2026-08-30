@@ -36,3 +36,6 @@ venv/
 # Environment variables
 .env.local
 .env.production
+
+sample.py
+mediapipe_old.jsx
