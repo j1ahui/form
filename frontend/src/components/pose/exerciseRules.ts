@@ -1,6 +1,21 @@
 import STAGE from "./stages";
 
-function getElbowAngle(lm, side, MP, angleBetween) {
+type Side = "left" | "right";
+type Landmark = {x: number; y: number; z: number; visibility?: number}
+type AngleResult = {angle: number; points: Landmark[];}
+type Stage = (typeof STAGE)[keyof typeof STAGE];
+type PoseLandMarkIndices = {LEFT_SHOULDER: number; RIGHT_SHOULDER: number; LEFT_ELBOW: number; RIGHT_ELBOW: number; LEFT_WRIST: number; RIGHT_WRIST: number; LEFT_HIP: number; RIGHT_HIP: number;};
+type AngleBetween = (a: Landmark, b: Landmark, c: Landmark) => number;
+type NextStageResult = {stage: Stage; repCompleted: boolean;};
+type Feedback = {text: string; color: string;};
+type ExerciseRule = {name: string; angleType: "elbow" | "shoulder"; 
+    getAngle: (lm: Landmark[], side: Side, MP: PoseLandMarkIndices, angleBetween: AngleBetween) => AngleResult;
+    getNextStage: (stage: Stage, angle: number) => NextStageResult;
+    getFeedback: (angle: number, stage: Stage) => Feedback;
+};
+
+
+function getElbowAngle(lm: Landmark[], side: Side, MP: PoseLandMarkIndices, angleBetween: AngleBetween): AngleResult {
     const shoulder = lm[side === "left" ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];
     const elbow = lm[side === "left" ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
     const wrist = lm[side === "left" ? MP.LEFT_WRIST : MP.RIGHT_WRIST];
@@ -11,7 +26,8 @@ function getElbowAngle(lm, side, MP, angleBetween) {
     }
 }
 
-function getShoulderAngle(lm, side, MP, angleBetween) {
+
+function getShoulderAngle(lm: Landmark[], side: Side, MP: PoseLandMarkIndices, angleBetween: AngleBetween): AngleResult {
     const hip = lm[side === "left" ? MP.LEFT_HIP : MP.RIGHT_HIP];
     const shoulder = lm[side === "left" ? MP.LEFT_SHOULDER : MP.RIGHT_SHOULDER];
     const elbow = lm[side === "left" ? MP.LEFT_ELBOW : MP.RIGHT_ELBOW];
@@ -23,7 +39,7 @@ function getShoulderAngle(lm, side, MP, angleBetween) {
 }
 
 
-const exerciseRules = {
+const exerciseRules: Record<string, ExerciseRule> = {
     bicep_curl: {
         name: "Bicep Curl",
         angleType: "elbow",
@@ -137,7 +153,7 @@ const exerciseRules = {
             if (angle >= 160) { return { text: "Arms extended - lower slowly", color: "#22c55e"};}
             if (angle <= 90) { return { text: "Elbows bent - press upwards", color: "#22c55e"};}
             if (angle >= 120 && stage === STAGE.GOING_UP) { return { text: "Keep pressing upwards", color: "#22c55e"};}
-            if (angle >= 120 && stage === stage.GOING_DOWN) { return { text: "Lower with control", color: "#22c55e"};}
+            if (angle >= 120 && stage === STAGE.GOING_DOWN) { return { text: "Lower with control", color: "#22c55e"};}
             return { text: "Keeeep going", color: "#22c55e"};
         },
 
@@ -158,7 +174,7 @@ const exerciseRules = {
             if (stage === STAGE.GOING_DOWN && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_DOWN;}
             if (stage === STAGE.PASSED_MID_DOWN && angle < 50) {stage = STAGE.AT_BOTTOM;}
             if (stage === STAGE.AT_BOTTOM && angle >= 50) {stage = STAGE.GOING_UP;}
-            if (stage === STAGE.GOING_DOWN && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_UP;}
+            if (stage === STAGE.GOING_UP && angle >= 60 && angle <= 100) {stage = STAGE.PASSED_MID_UP;}
             if (stage === STAGE.PASSED_MID_UP && angle > 150) {repCompleted = true; stage = STAGE.GOING_DOWN;}
 
             return {stage, repCompleted}
@@ -171,6 +187,35 @@ const exerciseRules = {
             if (angle > 100 && stage === STAGE.GOING_DOWN) { return { text: "Keep lowering for full range of motion", color: "#22c55e"};}
 
             return {text: "Keep going!", color: "#22c55e"};
+        }
+    },
+
+    overhead_extensions: {
+        name: "Overhead Extensions",
+        angleType: "elbow",
+        getAngle(lm, side, MP, angleBetween) {
+            return getElbowAngle(lm, side, MP, angleBetween)
+        },
+        getNextStage(stage, angle) {
+            
+            let repCompleted = false;
+
+            if (stage === STAGE.WAITING && angle >= 70 && angle <= 110) {stage = STAGE.GOING_UP;}
+            if (stage === STAGE.GOING_UP && angle >= 120 && angle <= 150) {stage = STAGE.PASSED_MID_UP;}
+            if (stage === STAGE.PASSED_MID_UP && angle > 150) {stage = STAGE.AT_TOP;}
+            if (stage === STAGE.AT_TOP && angle <= 150) {stage = STAGE.GOING_DOWN;}
+            if (stage === STAGE.GOING_DOWN && angle >= 70 && angle <= 120) {stage = STAGE.PASSED_MID_DOWN;}
+            if (stage === STAGE.PASSED_MID_DOWN && angle <= 110) {repCompleted = true; stage = STAGE.GOING_UP;}
+
+            return {stage, repCompleted};
+        },
+        getFeedback(angle, stage) {
+            if (angle < 70) { return { text: "Lower the cable with control", color: "#f59e0b"};}
+            if (angle > 160) { return {text: "Arms extended - lower slowly", color: "#f59e0b"};}
+            if (angle >= 120 && stage === STAGE.GOING_UP) { return { text: "Extend your elbows - keep your upper arms still", color: "#f59e0b"};}
+            if (angle >= 120 && stage === STAGE.GOING_DOWN) { return { text: "Lower slowly and keep your elbows controlled", color: "#f59e0b"};}
+
+            return {text: "Keep going", color: "#f59e0b"};
         }
     }
     

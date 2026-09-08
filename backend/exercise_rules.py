@@ -22,9 +22,16 @@ def generate_rule_based_instructions(exercise, equipment, body):
         ],
         "shoulder_press": [
             "Sit or stand with your feet shoulder-width apart and hold the dumbbells at shoulder height with your palms facing forward.",
-            "Press the dumbbells overhead until your arms are full extended, keeping your core braces without excessive arching of your back.",
+            "Press the dumbbells overhead until your arms are fully extended, keeping your core braced without excessive arching of your back.",
             "Lower the dumbbells slowly and under control back to shoulder height."
-        ]
+        ],
+        "overhead_extensions": [
+            "Stand tall with your feet shoulder width apart and hold the cable with your arms extended.",
+            "Bend your elbow and lower the cable behind your head while keeping your upper arms relatively still and your elbows pointed forward.",
+            "Extend your elbows to raise the cable back overhead, keeping the movement controlled and avoiding excessive movement of your upper arms."
+        ],
+
+        
     }
 
     # Default sets/reps/rest

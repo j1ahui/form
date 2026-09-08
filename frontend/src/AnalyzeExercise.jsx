@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PoseDetection from "./components/PoseDetection";
 
-const POSE_SUPPORTED = ["bicep_curl", "hammer_curl", "lateral_raises", "shoulder_press", "bench_press"];        // array in js (would be a list in python)
+const POSE_SUPPORTED = ["bicep_curl", "hammer_curl", "lateral_raises", "shoulder_press", "bench_press", "overhead_extensions"];        // array in js (would be a list in python)
 
 function AnalyzeExercise() {
   const {state} = useLocation();
@@ -23,7 +23,7 @@ function AnalyzeExercise() {
 
     if (mode === "pose") {
       if (!POSE_SUPPORTED.includes(exercise)) {           
-        alert("Pose detection is currently only available for Bicep Curl. More coming soon ;))");
+        alert("Pose detection is currently only available for certain exercises. More coming soon ;))");
         return;
       }
       setShowPose(true);
@@ -82,6 +82,7 @@ const poseAvailable = POSE_SUPPORTED.includes(exercise);
             <option value="tricep_curls">Tricep Curls</option>
             <option value="shoulder_press">Shoulder Press</option>
             <option value="bench_press">Bench Press</option>
+            <option value="overhead_extensions">Overhead Extensions</option>
           </select>
 
           {/* Equipment */}
