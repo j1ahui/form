@@ -2,6 +2,7 @@ import os
 import hashlib
 import secrets
 from datetime import datetime
+from dotenv import load_dotenv
 
 import psycopg2                 # python lib used to connect to a postgresql database 
 import psycopg2.extras
@@ -10,9 +11,10 @@ from flask_cors import CORS
 from exercise_rules import generate_rule_based_instructions
 from recommender import get_similar_exercises
 
+load_dotenv()
+
 app = Flask(__name__)                       # creating flask object/instance (initialiased through Flask(__name__))
-# app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY","oooooh-my-keey")
-app.config["SECRET_KEY"] = "oooooh-my-keey"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = False
 CORS(app, supports_credentials=True, origins=["http://127.0.0.1:5173"])       # allows react to talk to flask

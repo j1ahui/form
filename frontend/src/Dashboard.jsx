@@ -1,6 +1,3 @@
-// src/pages/Dashboard.jsx
-// Shows: user greeting, quick-start buttons, recent workouts, weight progress, personal bests
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
